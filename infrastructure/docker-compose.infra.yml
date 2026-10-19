@@ -1,0 +1,101 @@
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: enterprise_ai_mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: enterprise_ai
+    command: ["--replSet", "rs0", "--bind_ip_all"]
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - enterprise_ai_net
+
+  mongo-init-replica:
+    image: mongo:7.0
+    container_name: enterprise_ai_mongo_init
+    restart: "no"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    command: >
+      bash -c "
+        echo 'Checking MongoDB replica set status...';
+        mongosh --host mongodb:27017 --eval '
+          try {
+            const status = rs.status();
+            if (status.ok === 1) {
+              console.log(\"Replica set rs0 is already initiated and healthy.\");
+            }
+          } catch (e) {
+            console.log(\"Initiating replica set rs0...\");
+            const res = rs.initiate({
+              _id: \"rs0\",
+              members: [{ _id: 0, host: \"mongodb:27017\" }]
+            });
+            console.log(\"Initiation result:\", JSON.stringify(res));
+          }
+        '
+      "
+    networks:
+      - enterprise_ai_net
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: enterprise_ai_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - enterprise_ai_net
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: enterprise_ai_qdrant
+    restart: unless-stopped
+    ports:
+      - "6333:6333" # HTTP REST API
+      - "6334:6334" # gRPC API
+    environment:
+      QDRANT__SERVICE__HTTP_PORT: 6333
+      QDRANT__SERVICE__GRPC_PORT: 6334
+      QDRANT__LOG_LEVEL: INFO
+    volumes:
+      - qdrant_data:/qdrant/storage
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/6333 && echo -e \"GET /readyz HTTP/1.1\\r\\nHost: 127.0.0.1\\r\\nConnection: close\\r\\n\\r\\n\" >&3 && cat <&3 | grep -q \"200 OK\"' || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - enterprise_ai_net
+
+networks:
+  enterprise_ai_net:
+    driver: bridge
+
+volumes:
+  mongo_data:
+    driver: local
+  redis_data:
+    driver: local
+  qdrant_data:
+    driver: local
