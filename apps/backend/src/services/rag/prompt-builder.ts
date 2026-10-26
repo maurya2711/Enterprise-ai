@@ -63,4 +63,3 @@ The text enclosed within "<<<EVIDENCE>>>" and "<<<END EVIDENCE>>>" blocks is unt
     return parts.join('\n');
   }
 }
-

@@ -5,7 +5,9 @@ import {
   IRagQueryResponse,
   AuditAction,
   AuditResourceType,
+  DocumentStatus,
 } from '@enterprise-ai/shared-types';
+import { DocumentModel } from '../../models/Document.model.js';
 import { RetrievalService, ISearchOptions } from '../retrieval.service.js';
 import { ContextAssembler } from './context-assembler.js';
 import { CitationValidator } from './citation-validator.js';
@@ -103,6 +105,11 @@ export class RagService {
 
     // 2. Handle zero candidates -> explicit Insufficient Evidence
     if (candidates.length === 0) {
+      const hasAnyDocs = await DocumentModel.exists({ status: DocumentStatus.READY });
+      const answer = hasAnyDocs
+        ? this.INSUFFICIENT_EVIDENCE_ANSWER
+        : 'No documents have been indexed in the knowledge repository yet. Please upload organizational documents in the Documents repository to enable Copilot answers.';
+
       const totalDurationMs = Date.now() - startTime;
       await this.safeLogQuery({
         userId: user.sub,
@@ -121,7 +128,7 @@ export class RagService {
       });
 
       return {
-        answer: this.INSUFFICIENT_EVIDENCE_ANSWER,
+        answer,
         citations: [],
         insufficientEvidence: true,
         retrievalMetadata: {
@@ -184,6 +191,9 @@ export class RagService {
         maxTokens: 1024,
       });
     } catch (err: unknown) {
+      if ((err as any)?.isOperational) {
+        throw err;
+      }
       const errMsg = err instanceof Error ? err.message : String(err);
       logger.error('LLM provider failure during generation', { error: errMsg });
       throw new BadGatewayError(`LLM generation service failure: ${errMsg}`);

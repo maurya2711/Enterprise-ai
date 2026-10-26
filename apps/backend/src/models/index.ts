@@ -7,4 +7,3 @@ export * from './QueryLog.model.js';
 export * from './Feedback.model.js';
 export * from './AuditLog.model.js';
 export * from './Session.model.js';
-

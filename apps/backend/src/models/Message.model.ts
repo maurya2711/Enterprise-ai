@@ -114,4 +114,3 @@ MessageSchema.index(
 );
 
 export const MessageModel = mongoose.model<IMessageEntity>('Message', MessageSchema);
-

@@ -224,4 +224,3 @@ Prior to horizontal scaling across multiple instances or replicas in production,
 2. **Option 2 (Single-Worker BullMQ Audit Queue)**:
    - Direct all application audit log events into a Redis-backed BullMQ queue (`audit-events`).
    - Run a single dedicated audit consumer worker (`concurrency: 1`) that processes events strictly sequentially, guaranteeing ordered hash chaining regardless of how many web API replicas are producing events.
-

@@ -1,8 +1,8 @@
 # Secure Retrieval, RAG Orchestration & Grounded Answer Generation Specification
 
-> **Phase**: Phase 4 Architecture & Operational Specification  
-> **Status**: Completed & Verified  
-> **Workspace**: `C:\Users\Programming.com\Desktop\Sharad\enterprise-ai`  
+> **Phase**: Phase 4 Architecture & Operational Specification
+> **Status**: Completed & Verified
+> **Workspace**: `C:\Users\Programming.com\Desktop\Sharad\enterprise-ai`
 
 ---
 

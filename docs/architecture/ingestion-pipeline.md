@@ -1,7 +1,7 @@
 # Secure Document Ingestion, Processing Pipeline & Vector Indexing Specification
 
-> **Phase**: Phase 3 Architecture & Operational Specification  
-> **Status**: Completed & Verified  
+> **Phase**: Phase 3 Architecture & Operational Specification
+> **Status**: Completed & Verified
 
 ---
 

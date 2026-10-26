@@ -1,6 +1,6 @@
 # UI/UX Design Specification & Frontend Architectural Standards
 
-> **Status**: Approved & Binding for Frontend Phase (Phase 7)  
+> **Status**: Approved & Binding for Frontend Phase (Phase 7)
 > **Target Framework**: Next.js 14+ (App Router), React 18, TypeScript, Tailwind CSS
 
 ---
