@@ -10,6 +10,8 @@ import {
   ShieldCheck,
   LayoutDashboard,
   ShieldAlert,
+  Users,
+  Database,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { Badge } from '@/components/ui';
@@ -43,6 +45,18 @@ export const MAIN_NAV_ITEMS: NavItem[] = [
 
 export const ADMIN_NAV_ITEMS: NavItem[] = [
   {
+    label: 'User Directory',
+    href: '/admin/users',
+    icon: Users,
+    adminOnly: true,
+  },
+  {
+    label: 'Document Management',
+    href: '/documents',
+    icon: Database,
+    adminOnly: true,
+  },
+  {
     label: 'Analytics & Trends',
     href: '/admin/analytics',
     icon: BarChart3,
@@ -66,8 +80,8 @@ export function SidebarNav({ onNavigate, className }: SidebarNavProps) {
   const { isAdmin } = useAuth();
 
   const isLinkActive = (href: string) => {
-    if (href === '/') {
-      return pathname === '/';
+    if (href === '/' || href === '/dashboard') {
+      return pathname === '/' || pathname === '/dashboard';
     }
     return pathname === href || pathname.startsWith(`${href}/`);
   };

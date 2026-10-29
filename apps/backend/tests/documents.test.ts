@@ -5,7 +5,7 @@ import { UserModel } from '../src/models/User.model.js';
 import { DocumentModel } from '../src/models/Document.model.js';
 import { DocumentChunkModel } from '../src/models/DocumentChunk.model.js';
 import { env } from '../src/config/env.js';
-import { Role, ClearanceLevel, DocumentStatus, IJwtPayload } from '@enterprise-ai/shared-types';
+import { Role, ClearanceLevel, DocumentStatus, IJwtPayload, Permission } from '@enterprise-ai/shared-types';
 
 describe('Document Upload, Lifecycle & Authorization API Integration Tests', () => {
   const userInternalId = '671350a12f3e8b0012345671';
@@ -16,7 +16,8 @@ describe('Document Upload, Lifecycle & Authorization API Integration Tests', () 
     userId: string,
     role: Role,
     clearance: ClearanceLevel,
-    department: string
+    department: string,
+    permissions?: string[]
   ): string {
     const payload: IJwtPayload = {
       sub: userId,
@@ -25,6 +26,7 @@ describe('Document Upload, Lifecycle & Authorization API Integration Tests', () 
       department,
       securityClearance: clearance,
       sessionId: `sess_${userId}`,
+      permissions,
     };
     return jwt.sign(payload, env.JWT_ACCESS_SECRET, { expiresIn: '1h' });
   }
@@ -33,13 +35,15 @@ describe('Document Upload, Lifecycle & Authorization API Integration Tests', () 
     userInternalId,
     Role.USER,
     ClearanceLevel.INTERNAL,
-    'Engineering'
+    'Engineering',
+    [Permission.DOCUMENTS_UPLOAD]
   );
   const userConfidentialToken = createTestToken(
     userConfidentialId,
     Role.USER,
     ClearanceLevel.CONFIDENTIAL,
-    'Executive'
+    'Engineering',
+    [Permission.DOCUMENTS_UPLOAD]
   );
   const adminToken = createTestToken(
     adminId,
@@ -80,6 +84,23 @@ describe('Document Upload, Lifecycle & Authorization API Integration Tests', () 
         .post('/api/v1/documents/upload')
         .attach('file', Buffer.from('Unauthenticated content'), 'notes.txt')
         .expect(401);
+    });
+
+    it('2b. Rejects upload when employee lacks documents:upload permission with 403', async () => {
+      const userWithoutUploadToken = createTestToken(
+        '671350a12f3e8b0012345679',
+        Role.USER,
+        ClearanceLevel.INTERNAL,
+        'Engineering',
+        [] // Explicitly no upload permissions
+      );
+      const res = await request(app)
+        .post('/api/v1/documents/upload')
+        .set('Authorization', `Bearer ${userWithoutUploadToken}`)
+        .attach('file', Buffer.from('Unauthorized employee content'), 'unauthorized.txt')
+        .expect(403);
+
+      expect(res.body.error.message).toContain("You do not possess the required permission: 'documents:upload'");
     });
 
     it('3. Rejects unsupported file format (.exe) with 400', async () => {
@@ -203,6 +224,9 @@ describe('Document Upload, Lifecycle & Authorization API Integration Tests', () 
         .expect(200);
 
       expect(carolList.body.data.documents.length).toBe(2);
+      const carolTitles = carolList.body.data.documents.map((d: any) => d.title);
+      expect(carolTitles).toContain('Engineering Handbook');
+      expect(carolTitles).toContain('Financial Projections');
     });
 
     it('5. Listing documents filters out documents restricted to other departments, roles, or users even with matching clearance', async () => {

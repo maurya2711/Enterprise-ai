@@ -16,5 +16,10 @@ module.exports = {
     '<rootDir>/tests/llm.test.ts',
     '<rootDir>/tests/llm-fallback.test.ts',
     '<rootDir>/tests/server-lifecycle.test.ts',
+    '<rootDir>/tests/swagger.test.ts',
+    '<rootDir>/tests/query-rewriter.test.ts',
+    '<rootDir>/tests/conversation-rename.test.ts',
+    '<rootDir>/tests/api-aliases.test.ts',
+    '<rootDir>/tests/admin-document-parity.test.ts',
   ],
 };
